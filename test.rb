@@ -1,10 +1,6 @@
 require './main'
 
 describe Solver do 
-  it "should initialize with an empty list of buckets" do
-    subject.buckets.should be_empty
-  end
-
   it "should read the goal & bucket volumes from stdin" do
     data = [
     100,
@@ -23,12 +19,12 @@ describe Solver do
 
 
   context "#bfs" do
-    it "should return the end state of bfs solution search when give start state" do
-      buckets = [Bucket.new(12), Bucket.new(7), Bucket.new(3)]
-      actions = [Action.new(:fill, [1, 2])]
-      goal = 150
+    it "should return the end state of bfs solution search when given start state and depth limit" do
+      buckets = [Bucket.new(15), Bucket.new(7), Bucket.new(3)]
+      actions = []
+      goal = 15
       start_state = State.new(buckets, actions, goal)
-      end_state = subject.bfs(start_state)
+      end_state = subject.bfs(start_state, 7)
 
       end_state.end_state?.should be_true
       end_state.actions.should_not be_empty
@@ -137,23 +133,27 @@ describe State do
     it "should return a list of actions" do
       list = subject.generate_possible_actions
       list.should_not be_empty
-      list.to_s.should == "[fill(0), fill(1), pour(0, 0), pour(0, 1), pour(1, 0), pour(1, 1)]"
+      list.to_s.should == "[fill(0), fill(1), pour(0, 1), pour(1, 0)]"
     end
   end
 
   context "#apply_action" do
     it "should apply action to itself" do
-      subject.apply_action(Action.new(:fill, [0]))
-      subject.buckets[0].water_amount.should == 12
+      buckets = [Bucket.new(12), Bucket.new(7)]
+      actions = [Action.new(:fill, [1, 2])]
+      goal = 150
+      state = State.new(buckets, actions, goal)
 
-      subject.apply_action(Action.new(:pour, [0, 1]))
-      subject.buckets[1].water_amount.should == 7
+      state.apply_action(Action.new(:fill, [0]))
+      state.buckets[0].water_amount.should == 12
 
-      subject.apply_action(Action.new(:empty, [0]))
-      subject.buckets[0].empty?.should be_true
+      state.apply_action(Action.new(:pour, [0, 1]))
+      state.buckets[1].water_amount.should == 7
 
-      subject.apply_action(Action.new(:give, [1]))
-      subject.goal.water_amount.should == 7
+      state.apply_action(Action.new(:empty, [0]))
+      state.buckets[0].empty?.should be_true
+
+      subject.actions.should_not be_empty
     end
   end
 
@@ -166,6 +166,21 @@ describe State do
   context "to_s" do
     it "should output a list comprised of actions, buckets and goal" do
       subject.to_s.should == "[(fill(1, 2)), (0/12, 0/7), 0/150]"
+    end
+  end
+
+  context "#clone" do
+    it "should deep-clone the State object" do
+      buckets = [Bucket.new(12), Bucket.new(7)]
+      actions = [Action.new(:fill, [1, 2])]
+      goal = 150
+      state = State.new(buckets, actions, goal)
+
+      cloned_state = state.clone
+      cloned_state.buckets[0].should_not == buckets[0]
+      cloned_state.buckets[1].should_not == buckets[1]
+      cloned_state.actions[0].should_not == actions[0]
+      cloned_state.goal.should_not == state.goal
     end
   end
 end
