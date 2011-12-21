@@ -40,8 +40,17 @@ describe GoalBucket do
   end
 
   it "should not be contrained by capacity" do
-    subject.fill(160)
-    subject.water_amount.should == 160
+    bucket = GoalBucket.new(150)
+    bucket.fill(160)
+    bucket.water_amount.should == 160
+  end
+
+  context "#to_s" do
+    it "should return a string representation of object" do
+      bucket = GoalBucket.new(160)
+      bucket.fill(170)
+      bucket.to_s.should == "170/160"
+    end
   end
 end
 describe Bucket do
