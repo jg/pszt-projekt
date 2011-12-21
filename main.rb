@@ -39,7 +39,6 @@ class GoalBucket < Bucket
   def fill(amount)
     @water_amount += amount
   end
-
 end
 
 class Action
@@ -89,7 +88,7 @@ class Solver
         new_state = state.clone.apply_action(action)
         puts new_state
         if new_state.end_state?
-          "Success! Last state follows: "
+          puts "Success! Last state follows: "
           puts new_state
           return new_state
         end
@@ -169,6 +168,6 @@ class State
 
     cloned_goal = @goal.clone
 
-    State.new(cloned_buckets, cloned_actions, cloned_goal)
+    State.new(cloned_buckets, cloned_actions, cloned_goal.water_amount)
   end
 end
