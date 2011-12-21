@@ -2,8 +2,8 @@ PSZT-Projekt
 -------------
 
 Prepare environment
-    bundle
+    ```bundle```
 
 Run tests 
-    bundle exec rspec test.rb
+    ```bundle exec rspec test.rb```
 
