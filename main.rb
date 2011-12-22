@@ -33,6 +33,11 @@ class Bucket
   def to_s
     "#{@water_amount}/#{@capacity}"
   end
+
+  def ==(bucket)
+    @capacity == bucket.capacity &&
+    @water_amount == bucket.water_amount
+  end
 end
 
 class GoalBucket  < Bucket
@@ -61,6 +66,11 @@ class Action
 
   def to_s
     "#{@action_name}(#{arguments.join(", ")})"
+  end
+
+  def ==(action)
+    action_name == action.action_name &&
+    arguments == action.arguments
   end
 end
 
@@ -92,7 +102,7 @@ class Solver
       state.generate_possible_actions.each do |action|
         # puts "applying #{action} to #{state}: "
         new_state = state.clone.apply_action(action)
-        puts new_state
+        # puts new_state
         if new_state.end_state?
           puts "Success! Last state follows: "
           puts new_state
@@ -103,7 +113,19 @@ class Solver
         # puts "fringe states count: #{fringe_states.count}"
       end
     end
+  end
 
+  def iterative_dfs(start_state, max_depth)
+    explored_states = [start_state]
+    depth = 0
+
+    while depth < max_depth
+      state.generate_possible_actions.each do |action|
+        new_state = state.apply(action)
+        unless explored_states.include?(new_state)
+        end
+      end
+    end
   end
 end
 
@@ -177,5 +199,11 @@ class State
     cloned_goal = @goal.clone
 
     State.new(cloned_buckets, cloned_actions, cloned_goal)
+  end
+
+  def ==(state)
+    @buckets == state.buckets &&
+    @actions == state.actions &&
+    @goal == state.goal
   end
 end
