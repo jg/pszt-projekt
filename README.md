@@ -14,7 +14,7 @@ Play with the code.
 
 1. Run irb
 2. ```require './main'```
-3. Sample code snippets:
+3. Sample code snippets below
 4. Uncomment puts methods in code for the full experience :-)
 
 ## Snippet-1
