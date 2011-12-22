@@ -75,9 +75,11 @@ class Action
 end
 
 class Solver
-  attr_reader :buckets, :goal
+  # explored_states used by dfs
+  attr_reader :buckets, :goal, :explored_states
   def initialize
     @buckets = []
+    @explored_states = []
   end
 
   def read_input_data
@@ -104,8 +106,8 @@ class Solver
         new_state = state.clone.apply_action(action)
         # puts new_state
         if new_state.end_state?
-          puts "Success! Last state follows: "
-          puts new_state
+          # puts "Success! Last state follows: "
+          # puts new_state
           return new_state
         end
 
@@ -116,17 +118,40 @@ class Solver
   end
 
   def iterative_dfs(start_state, max_depth)
-    explored_states = [start_state]
-    depth = 0
+    depth = 1
+    while depth <= max_depth
+      # puts "depth: #{depth}/#{max_depth}"
+      @explored_states = []
+      result = dfs(start_state, 0, depth)
+      if result
+        # puts "Success! Last state follows: "
+        # puts result
+        return result
+      end
+      depth += 1
+    end
 
-    while depth < max_depth
-      state.generate_possible_actions.each do |action|
-        new_state = state.apply(action)
-        unless explored_states.include?(new_state)
-        end
+    nil
+  end
+
+  def dfs(state, depth, max_depth)
+    # puts state
+    return nil if depth > max_depth
+    @explored_states << state
+
+    state.generate_possible_actions.each do |action|
+      new_state = state.clone.apply_action(action)
+      return new_state if new_state.end_state?
+
+      unless explored_states.include?(new_state)
+        result = dfs(new_state, depth+1, max_depth)
+        return result if result
       end
     end
+
+    nil
   end
+
 end
 
 class State

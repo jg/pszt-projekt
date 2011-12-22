@@ -32,6 +32,18 @@ describe Solver do
     end
   end
 
+  context "#dfs" do
+    it "should return the end state of dfs search when given start state, initial depth and depth limit" do
+      buckets = [Bucket.new(1), Bucket.new(2), Bucket.new(5)]
+      actions = []
+      goal = GoalBucket.new(5)
+      start_state = State.new(buckets, actions, goal)
+      end_state = subject.iterative_dfs(start_state, 3)
+
+      end_state.to_s.should == "[(fill(2), give(2)), (0/1, 0/2, 0/5), 5/5]"
+
+    end
+  end
 end
 
 describe GoalBucket do
