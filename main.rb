@@ -104,15 +104,14 @@ class Solver
       state.generate_possible_actions.each do |action|
         # puts "applying #{action} to #{state}: "
         new_state = state.clone.apply_action(action)
-        # puts new_state
+        puts new_state
         if new_state.end_state?
-          # puts "Success! Last state follows: "
-          # puts new_state
+          puts "Success! Last state follows: "
+          puts new_state
           return new_state
         end
 
         fringe_states << new_state
-        # puts "fringe states count: #{fringe_states.count}"
       end
     end
   end
@@ -120,12 +119,12 @@ class Solver
   def iterative_dfs(start_state, max_depth)
     depth = 1
     while depth <= max_depth
-      # puts "depth: #{depth}/#{max_depth}"
+      puts "depth: #{depth}/#{max_depth}"
       @explored_states = []
       result = dfs(start_state, 0, depth)
       if result
-        # puts "Success! Last state follows: "
-        # puts result
+        puts "Success! Last state follows: "
+        puts result
         return result
       end
       depth += 1
@@ -135,7 +134,7 @@ class Solver
   end
 
   def dfs(state, depth, max_depth)
-    # puts state
+    puts state
     return nil if depth > max_depth
     @explored_states << state
 

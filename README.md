@@ -1,6 +1,9 @@
 PSZT-Projekt
 -------------
 
+Install bundler
+    ```gem install bundler```
+
 Prepare environment
     ```bundle```
 
@@ -16,22 +19,23 @@ Play with the code.
 
 ## Snippet-1
 ```
+require './main'
 buckets = [Bucket.new(1), Bucket.new(2), Bucket.new(5)]
 actions = []
 goal = GoalBucket.new(9)
 start_state = State.new(buckets, actions, goal)
-
-end_state = subject.bfs(start_state, 7)
+end_state = Solver.new.bfs(start_state, 7)
 ```
 
 
 ## Snippet-2
 ```
+require './main'
 buckets = [Bucket.new(1), Bucket.new(2), Bucket.new(5)]
 actions = []
 goal = GoalBucket.new(4)
 start_state = State.new(buckets, actions, goal)
-end_state = subject.iterative_dfs(start_state, 3)
+end_state = Solver.new.iterative_dfs(start_state, 3)
 ```
 
 
