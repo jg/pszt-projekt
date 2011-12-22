@@ -35,10 +35,16 @@ class Bucket
   end
 end
 
-class GoalBucket < Bucket
+class GoalBucket  < Bucket
+  def initialize(capacity)
+    @capacity = capacity
+    @water_amount = 0
+  end
+
   def fill(amount)
     @water_amount += amount
   end
+
 end
 
 class Action
@@ -67,7 +73,7 @@ class Solver
   def read_input_data
     STDIN.read.chomp.split.each_with_index do |line, index|
       if index == 0 
-        @goal = line.to_i
+        @goal = GoalBucket.new(line.to_i)
       else
         @buckets[index-1] = Bucket.new(line.to_i)
       end
@@ -77,10 +83,10 @@ class Solver
   def bfs(start_state, depth_limit)
     fringe_states = [start_state]
     depth = 0
-    puts start_state
 
-    while (not fringe_states.empty?) and (depth < depth_limit)
+    while (not fringe_states.empty?) 
       state = fringe_states.delete_at(0)
+      break if state.actions.count >= depth_limit - 1
       depth += 1
 
       state.generate_possible_actions.each do |action|
@@ -106,7 +112,7 @@ class State
   def initialize(buckets, actions, goal)
     @buckets = buckets
     @actions = actions
-    @goal = GoalBucket.new(goal)
+    @goal = goal
   end
 
   def generate_possible_actions
@@ -141,7 +147,9 @@ class State
         @buckets[action.arguments[0]].empty
       when :give
         bucket = @buckets[action.arguments[0]]
+        # puts "goal water_amount is #{goal.water_amount}"
         goal.fill(bucket.empty)
+        # puts "new goal water_amount is #{goal.water_amount}"
     end
 
     self
@@ -168,6 +176,6 @@ class State
 
     cloned_goal = @goal.clone
 
-    State.new(cloned_buckets, cloned_actions, cloned_goal.water_amount)
+    State.new(cloned_buckets, cloned_actions, cloned_goal)
   end
 end

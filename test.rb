@@ -14,7 +14,7 @@ describe Solver do
     subject.buckets[0].capacity.should == 5
     subject.buckets[1].capacity.should == 8
     subject.buckets[2].capacity.should == 3
-    subject.goal.should == 100
+    subject.goal.capacity.should == 100
   end
 
 
@@ -22,9 +22,10 @@ describe Solver do
     it "should return the end state of bfs solution search when given start state and depth limit" do
       buckets = [Bucket.new(15), Bucket.new(7), Bucket.new(3)]
       actions = []
-      goal = 15
+      goal = GoalBucket.new(30)
+
       start_state = State.new(buckets, actions, goal)
-      end_state = subject.bfs(start_state, 7)
+      end_state = subject.bfs(start_state, 5)
 
       end_state.end_state?.should be_true
       end_state.actions.should_not be_empty
@@ -37,6 +38,13 @@ end
 describe GoalBucket do
   subject do 
     GoalBucket.new(150)
+  end
+
+  context "#water_amount" do
+    it "should return the amount of water contained in the bucket" do
+      subject.fill(10)
+      subject.water_amount.should == 10
+    end
   end
 
   it "should not be contrained by capacity" do
@@ -62,9 +70,17 @@ describe Bucket do
     subject.capacity.should == 12
   end
 
-  it "#fill" do
-    subject.fill(4)
-    subject.water_amount.should == 4
+  context "#fill" do
+    it "should fill the bucket with given amount of water" do
+      subject.fill(4)
+      subject.water_amount.should == 4
+
+      subject.empty
+      bucket = subject
+      bucket.fill(subject.capacity)
+      bucket.full?.should be_true
+    end
+
   end
 
   context "#empty" do
@@ -128,7 +144,7 @@ describe State do
   subject do
     buckets = [Bucket.new(12), Bucket.new(7)]
     actions = [Action.new(:fill, [1, 2])]
-    goal = 150
+    goal = GoalBucket.new(150)
     State.new(buckets, actions, goal)
   end
 
@@ -182,7 +198,7 @@ describe State do
     it "should deep-clone the State object" do
       buckets = [Bucket.new(12), Bucket.new(7)]
       actions = [Action.new(:fill, [1, 2])]
-      goal = 150
+      goal = GoalBucket.new(150)
       state = State.new(buckets, actions, goal)
 
       cloned_state = state.clone
@@ -190,6 +206,7 @@ describe State do
       cloned_state.buckets[1].should_not == buckets[1]
       cloned_state.actions[0].should_not == actions[0]
       cloned_state.goal.should_not == state.goal
+      cloned_state.goal.capacity.should == state.goal.capacity
     end
   end
 end
