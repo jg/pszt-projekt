@@ -267,10 +267,17 @@ class State
     @buckets.each_with_index do |bucket, index|
       possible_actions << Action.new(:empty, [index]) unless bucket.empty?
 
+      # TODO: which reverse actions are allowed, really?
       space_left = bucket.capacity - bucket.water_amount
-      (1...space_left).each do |amount|
-        possible_actions << Action.new(:take, [index, amount])
+      if space_left <= goal.water_amount
+        possible_actions << Action.new(:take, [index, space_left])
       end
+
+      # space_left = bucket.capacity - bucket.water_amount
+      # (1...space_left).each do |amount|
+      #   possible_actions << Action.new(:take, [index, amount])
+      # end
+
       possible_actions << Action.new(:fill, [index]) unless bucket.full?
     end
 
