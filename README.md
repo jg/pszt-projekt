@@ -38,4 +38,17 @@ start_state = State.new(buckets, actions, goal)
 end_state = Solver.new.iterative_dfs(start_state, 3)
 ```
 
+## Snippet-3
+```
+require './main'
+buckets = [Bucket.new(1), Bucket.new(2), Bucket.new(5)]
+actions = []
+goal = GoalBucket.new(4)
+start_state = State.new(buckets, actions, goal)
+
+new_goal = goal.clone
+new_goal.fill(4)
+end_state = State.new(buckets, actions, new_goal)
+Solver.new.two_way_search(start_state, end_state, 10)
+```
 

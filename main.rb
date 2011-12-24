@@ -22,6 +22,14 @@ class Bucket
     tmp
   end
 
+  def spill(amount)
+    if @water_amount - amount > 0
+      @water_amount -= amount
+    else
+      @water_amount = 0
+    end
+  end
+
   def empty?
     @water_amount == 0
   end
@@ -56,10 +64,6 @@ class Action
   attr_reader :action_name, :arguments
 
   def initialize(action, argument_list)
-    unless [:fill, :pour, :empty, :give].include?(action)
-      raise
-    end
-
     @action_name = action
     @arguments = argument_list
   end
@@ -71,6 +75,46 @@ class Action
   def ==(action)
     action_name == action.action_name &&
     arguments == action.arguments
+  end
+
+  def invert
+    case @action_name
+      when :fill
+        Action.new(:empty, [@arguments[0]])
+      when :pour
+        Action.new(:pour, [@arguments[1], @arguments[0]])
+      when :empty
+        Action.new(:fill, [@arguments[0]])
+      when :take # from pool filling bucket indexed by first arg with the amount - second arg
+        Action.new(:give, [@arguments[0]])
+    
+    end
+  end
+end
+
+
+# used by two_way_search
+class Array
+  def intersects?(array)
+    self.each do |element|
+      array.each do |array_element|
+        if element.equals(array_element)
+          return true 
+        end
+      end
+    end
+    false
+  end
+
+  def intersection(array)
+    self.each do |element|
+      array.each do |array_element|
+        if element.equals(array_element)
+          return [element, array_element]
+        end
+      end
+    end
+    nil
   end
 end
 
@@ -102,12 +146,12 @@ class Solver
       depth += 1
 
       state.generate_possible_actions.each do |action|
-        # puts "applying #{action} to #{state}: "
+        # warn "applying #{action} to #{state}: "
         new_state = state.clone.apply_action(action)
-        puts new_state
+        warn new_state
         if new_state.end_state?
-          puts "Success! Last state follows: "
-          puts new_state
+          # warn "Success! Last state follows: "
+          # warn new_state
           return new_state
         end
 
@@ -119,12 +163,12 @@ class Solver
   def iterative_dfs(start_state, max_depth)
     depth = 1
     while depth <= max_depth
-      puts "depth: #{depth}/#{max_depth}"
+      # warn "depth: #{depth}/#{max_depth}"
       @explored_states = []
       result = dfs(start_state, 0, depth)
       if result
-        puts "Success! Last state follows: "
-        puts result
+        # warn "Success! Last state follows: "
+        # warn result
         return result
       end
       depth += 1
@@ -134,7 +178,7 @@ class Solver
   end
 
   def dfs(state, depth, max_depth)
-    puts state
+    # warn state
     return nil if depth > max_depth
     @explored_states << state
 
@@ -149,6 +193,44 @@ class Solver
     end
 
     nil
+  end
+
+  # hint: start_state is to the left
+  # end_state is to the right
+  def two_way_search(start_state, end_state, max_depth)
+    left_fringe_states = [start_state]
+    right_fringe_states = [end_state]
+
+    depth = 0
+    # until fringes intersect
+    while not (left_fringe_states.intersects?(right_fringe_states)) and depth <= max_depth do
+      depth += 1
+      # step right
+      puts "left_fringe: #{left_fringe_states}"
+      left_state = left_fringe_states.delete_at(0)
+      left_state.generate_possible_actions.each do |action|
+        left_fringe_states << left_state.clone.apply_action(action)
+      end
+
+
+      # step left
+      puts "right_fringe: #{right_fringe_states}"
+      right_state = right_fringe_states.delete_at(0)
+      right_state.generate_possible_reverse_actions.each do |action|
+        right_fringe_states << right_state.clone.apply_action(action)
+      end
+
+    end
+
+    if (left_fringe_states.intersects?(right_fringe_states))
+      # return left_fringe_states.intersection(right_fringe_states)
+      state1, state2 = left_fringe_states.intersection(right_fringe_states)
+      puts state1
+      puts state2
+      return state1.actions + state2.actions.reverse.map(&:invert)
+    else
+      nil
+    end
   end
 
 end
@@ -179,6 +261,28 @@ class State
     possible_actions
   end
 
+  def generate_possible_reverse_actions
+    possible_actions = []
+
+    @buckets.each_with_index do |bucket, index|
+      possible_actions << Action.new(:empty, [index]) unless bucket.empty?
+
+      space_left = bucket.capacity - bucket.water_amount
+      (1...space_left).each do |amount|
+        possible_actions << Action.new(:take, [index, amount])
+      end
+      possible_actions << Action.new(:fill, [index]) unless bucket.full?
+    end
+
+    @buckets.each_with_index do |bucket1, index1|
+      @buckets.each_with_index do |bucket2, index2|
+        possible_actions << Action.new(:pour, [index1, index2]) if index1 != index2
+      end
+    end
+
+    possible_actions
+  end
+
   def apply_action(action)
     @actions << action
     case action.action_name
@@ -193,9 +297,13 @@ class State
         @buckets[action.arguments[0]].empty
       when :give
         bucket = @buckets[action.arguments[0]]
-        # puts "goal water_amount is #{goal.water_amount}"
+        # warn "goal water_amount is #{goal.water_amount}"
         goal.fill(bucket.empty)
-        # puts "new goal water_amount is #{goal.water_amount}"
+        # warn "new goal water_amount is #{goal.water_amount}"
+      when :take # from pool filling bucket indexed by first arg with the amount - second arg
+        bucket = @buckets[action.arguments[0]]
+        bucket.fill(action.arguments[1])
+        @goal.spill(action.arguments[1])
     end
 
     self
@@ -225,9 +333,16 @@ class State
     State.new(cloned_buckets, cloned_actions, cloned_goal)
   end
 
+  # full equality, used in bfs & iterative dfs
   def ==(state)
     @buckets == state.buckets &&
     @actions == state.actions &&
+    @goal == state.goal
+  end
+
+  # partial equality, equality of buckets suffices
+  def equals(state)
+    @buckets == state.buckets &&
     @goal == state.goal
   end
 end
