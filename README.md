@@ -17,7 +17,7 @@ Play with the code.
 3. Sample code snippets below
 4. Uncomment puts methods in code for the full experience :-)
 
-## Snippet-1
+## Snippet-1 (bfs)
 ```
 require './main'
 buckets = [Bucket.new(1), Bucket.new(2), Bucket.new(5)]
@@ -28,7 +28,7 @@ end_state = Solver.new.bfs(start_state, 7)
 ```
 
 
-## Snippet-2
+## Snippet-2 (iterative dfs)
 ```
 require './main'
 buckets = [Bucket.new(1), Bucket.new(2), Bucket.new(5)]
@@ -38,7 +38,7 @@ start_state = State.new(buckets, actions, goal)
 end_state = Solver.new.iterative_dfs(start_state, 3)
 ```
 
-## Snippet-3
+## Snippet-3 (two-way search)
 ```
 require './main'
 buckets = [Bucket.new(1), Bucket.new(2), Bucket.new(5)]
