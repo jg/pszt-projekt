@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 class Bucket
   attr_reader :capacity, :water_amount
   
@@ -136,22 +138,23 @@ class Solver
     end
   end
 
-  def bfs(start_state, depth_limit)
+  def bfs(depth_limit)
+    start_state = State.new(@buckets, [], @goal)
     fringe_states = [start_state]
     depth = 0
 
     while (not fringe_states.empty?) 
       state = fringe_states.delete_at(0)
-      break if state.actions.count >= depth_limit - 1
-      depth += 1
+      break if state.actions.count >= depth_limit
 
       state.generate_possible_actions.each do |action|
         # warn "applying #{action} to #{state}: "
         new_state = state.clone.apply_action(action)
-        warn new_state
+        # warn new_state
         if new_state.end_state?
           # warn "Success! Last state follows: "
           # warn new_state
+          warn new_state.actions.join(", ")
           return new_state
         end
 
@@ -160,7 +163,9 @@ class Solver
     end
   end
 
-  def iterative_dfs(start_state, max_depth)
+  def iterative_dfs(max_depth)
+    start_state = State.new(@buckets, [], @goal)
+
     depth = 1
     while depth <= max_depth
       # warn "depth: #{depth}/#{max_depth}"
@@ -169,6 +174,7 @@ class Solver
       if result
         # warn "Success! Last state follows: "
         # warn result
+        warn result.actions.join(", ")
         return result
       end
       depth += 1
@@ -197,7 +203,12 @@ class Solver
 
   # hint: start_state is to the left
   # end_state is to the right
-  def two_way_search(start_state, end_state, max_depth)
+  def two_way_search(max_depth)
+    start_state = State.new(@buckets, [], @goal)
+    end_goal = @goal.clone
+    end_goal.fill(@goal.capacity)
+    end_state = State.new(@buckets, [], end_goal)
+
     left_fringe_states = [start_state]
     right_fringe_states = [end_state]
 
@@ -206,7 +217,7 @@ class Solver
     while not (left_fringe_states.intersects?(right_fringe_states)) and depth <= max_depth do
       depth += 1
       # step right
-      puts "left_fringe: #{left_fringe_states}"
+      # puts "left_fringe: #{left_fringe_states}"
       left_state = left_fringe_states.delete_at(0)
       left_state.generate_possible_actions.each do |action|
         left_fringe_states << left_state.clone.apply_action(action)
@@ -214,7 +225,7 @@ class Solver
 
 
       # step left
-      puts "right_fringe: #{right_fringe_states}"
+      # puts "right_fringe: #{right_fringe_states}"
       right_state = right_fringe_states.delete_at(0)
       right_state.generate_possible_reverse_actions.each do |action|
         right_fringe_states << right_state.clone.apply_action(action)
@@ -225,9 +236,11 @@ class Solver
     if (left_fringe_states.intersects?(right_fringe_states))
       # return left_fringe_states.intersection(right_fringe_states)
       state1, state2 = left_fringe_states.intersection(right_fringe_states)
-      puts state1
-      puts state2
-      return state1.actions + state2.actions.reverse.map(&:invert)
+      # puts state1
+      # puts state2
+      action_list = state1.actions + state2.actions.reverse.map(&:invert)
+      puts action_list.join(", ")
+      return action_list
     else
       nil
     end
@@ -352,4 +365,16 @@ class State
     @buckets == state.buckets &&
     @goal == state.goal
   end
+end
+
+solver = Solver.new
+solver.read_input_data
+
+case ARGV.first
+  when "bfs"
+    solver.bfs(4)
+  when "dfs"
+    solver.iterative_dfs(4)
+  when "two-way"
+    solver.two_way_search(4)
 end
