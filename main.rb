@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+require 'set'
+
 class Bucket
   attr_reader :capacity, :water_amount
   
@@ -150,10 +152,10 @@ class Solver
       state.generate_possible_actions.each do |action|
         # warn "applying #{action} to #{state}: "
         new_state = state.clone.apply_action(action)
-        # warn new_state
+        warn new_state
         if new_state.end_state?
-          # warn "Success! Last state follows: "
-          # warn new_state
+          warn "Success! Last state follows: "
+          warn new_state
           warn new_state.actions.join(", ")
           return new_state
         end
@@ -172,8 +174,8 @@ class Solver
       @explored_states = []
       result = dfs(start_state, 0, depth)
       if result
-        # warn "Success! Last state follows: "
-        # warn result
+        warn "Success! Last state follows: "
+        warn result
         warn result.actions.join(", ")
         return result
       end
@@ -236,8 +238,8 @@ class Solver
     if (left_fringe_states.intersects?(right_fringe_states))
       # return left_fringe_states.intersection(right_fringe_states)
       state1, state2 = left_fringe_states.intersection(right_fringe_states)
-      # puts state1
-      # puts state2
+      puts state1
+      puts state2
       action_list = state1.actions + state2.actions.reverse.map(&:invert)
       puts action_list.join(", ")
       return action_list
@@ -274,6 +276,29 @@ class State
     possible_actions
   end
 
+  def bucket_of_capacity_one_present?
+    @buckets.each {|b| true if b.capacity == 1}
+    false
+  end
+
+  def possible_water_amounts_for_bucket(bucket_index)
+    bucket = @buckets[bucket_index] 
+    return (1...bucket.capacity).to_a if bucket_of_capacity_one_present?
+
+    set = Set.new([bucket.capacity])
+    @buckets.each do |other_bucket|
+      if bucket != other_bucket
+        water_amount = bucket.capacity - other_bucket.capacity 
+        while water_amount > 0 
+          set << water_amount
+          water_amount -= other_bucket.capacity
+        end
+      end
+    end
+
+    set.to_a
+  end
+
   def generate_possible_reverse_actions
     possible_actions = []
 
@@ -281,9 +306,13 @@ class State
       possible_actions << Action.new(:empty, [index]) unless bucket.empty?
 
       # TODO: which reverse actions are allowed, really?
-      space_left = bucket.capacity - bucket.water_amount
-      if space_left <= goal.water_amount
-        possible_actions << Action.new(:take, [index, space_left])
+      # space_left = bucket.capacity - bucket.water_amount
+      # if space_left <= goal.water_amount
+      #   possible_actions << Action.new(:take, [index, space_left])
+      # end
+
+      possible_water_amounts_for_bucket(index).each do |amount|
+        possible_actions << Action.new(:take, [index, amount])
       end
 
       # space_left = bucket.capacity - bucket.water_amount
@@ -376,5 +405,5 @@ case ARGV.first
   when "dfs"
     solver.iterative_dfs(4)
   when "two-way"
-    solver.two_way_search(4)
+    solver.two_way_search(8)
 end
