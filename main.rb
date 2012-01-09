@@ -130,6 +130,11 @@ class Solver
     @explored_states = []
   end
 
+  def init(buckets, goal)
+    @buckets = buckets
+    @goal = goal
+  end
+
   def read_input_data
     STDIN.read.chomp.split.each_with_index do |line, index|
       if index == 0 
@@ -150,14 +155,12 @@ class Solver
       break if state.actions.count >= depth_limit
 
       state.generate_possible_actions.each do |action|
-        # warn "applying #{action} to #{state}: "
         new_state = state.clone.apply_action(action)
         warn new_state
         if new_state.end_state?
-          warn "Success! Last state follows: "
           warn new_state
           warn new_state.actions.join(", ")
-          return new_state
+          return new_state.actions
         end
 
         fringe_states << new_state
@@ -174,10 +177,9 @@ class Solver
       @explored_states = []
       result = dfs(start_state, 0, depth)
       if result
-        warn "Success! Last state follows: "
         warn result
         warn result.actions.join(", ")
-        return result
+        return result.actions
       end
       depth += 1
     end
@@ -192,6 +194,7 @@ class Solver
 
     state.generate_possible_actions.each do |action|
       new_state = state.clone.apply_action(action)
+      puts new_state
       return new_state if new_state.end_state?
 
       unless explored_states.include?(new_state)
@@ -238,10 +241,12 @@ class Solver
     if (left_fringe_states.intersects?(right_fringe_states))
       # return left_fringe_states.intersection(right_fringe_states)
       state1, state2 = left_fringe_states.intersection(right_fringe_states)
-      puts state1
-      puts state2
-      action_list = state1.actions + state2.actions.reverse.map(&:invert)
-      puts action_list.join(", ")
+      # puts state1
+      # puts state2
+      # action_list = state1.actions + state2.actions.reverse.map(&:invert)
+      action_list = state1.actions + state2.invert
+      warn action_list.join(", ")
+      warn 'return action_list'
       return action_list
     else
       nil
@@ -312,7 +317,7 @@ class State
       # end
 
       possible_water_amounts_for_bucket(index).each do |amount|
-        possible_actions << Action.new(:take, [index, amount])
+        possible_actions << Action.new(:take, [index, amount]) if amount <= @goal.capacity
       end
 
       # space_left = bucket.capacity - bucket.water_amount
@@ -346,9 +351,7 @@ class State
         @buckets[action.arguments[0]].empty
       when :give
         bucket = @buckets[action.arguments[0]]
-        # warn "goal water_amount is #{goal.water_amount}"
         goal.fill(bucket.empty)
-        # warn "new goal water_amount is #{goal.water_amount}"
       when :take # from pool filling bucket indexed by first arg with the amount - second arg
         bucket = @buckets[action.arguments[0]]
         bucket.fill(action.arguments[1])
@@ -393,6 +396,35 @@ class State
   def equals(state)
     @buckets == state.buckets &&
     @goal == state.goal
+  end
+
+
+  def invert
+    list = []
+    @actions.reverse.each do |action|
+      case action.action_name
+        when :fill
+          list << Action.new(:empty, [action.arguments[0]])
+        when :pour
+          list << Action.new(:pour, [action.arguments[1], action.arguments[0]])
+        when :empty
+          list << Action.new(:fill, [action.arguments[0]])
+        when :take # from pool filling bucket indexed by first arg with the amount - second arg
+          # we have such a bucket
+          if @buckets.detect {|bucket| bucket.capacity == action.arguments[1]}
+            list << Action.new(:give, [action.arguments[0]])
+          else
+            # no such bucket, the inverse will be a list of actions
+            # state = State.new(@buckets, [], GoalBucket.new(action.arguments[1]))
+            solver = Solver.new
+            solver.init(@buckets, GoalBucket.new(action.arguments[1]))
+            list << solver.bfs(5)
+            warn list
+          end
+      end
+    end
+
+    list
   end
 end
 
